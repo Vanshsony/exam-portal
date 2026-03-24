@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Leaderboard')}"></head>
+<body class="d-flex flex-column min-vh-100">
+<nav th:replace="~{fragments/layout :: navbar}"></nav>
+
+<div class="container my-4 flex-grow-1">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h4 class="fw-bold"><i class="bi bi-trophy-fill me-2 text-warning"></i>Leaderboard</h4>
+        <!-- Filter by exam -->
+        <div class="d-flex gap-2 align-items-center">
+            <span class="text-muted small">Filter by exam:</span>
+            <a th:href="@{/admin/leaderboard}" class="btn btn-sm btn-outline-primary">All</a>
+            <a th:each="exam : ${exams}"
+               th:href="@{/admin/leaderboard/exam/{id}(id=${exam.id})}"
+               th:text="${exam.title}"
+               class="btn btn-sm btn-outline-secondary"></a>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm rounded-4">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-dark">
+                        <tr>
+                            <th class="ps-4">Rank</th>
+                            <th>Student</th>
+                            <th>Exam</th>
+                            <th>Score</th>
+                            <th>Percentage</th>
+                            <th>Status</th>
+                            <th>Tab Switches</th>
+                            <th class="pe-4">Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="attempt, stat : ${attempts}">
+                            <td class="ps-4">
+                                <span th:if="${stat.index == 0}" class="badge bg-warning text-dark fs-6">🥇</span>
+                                <span th:if="${stat.index == 1}" class="badge bg-secondary fs-6">🥈</span>
+                                <span th:if="${stat.index == 2}" class="badge bg-danger fs-6">🥉</span>
+                                <span th:if="${stat.index > 2}" class="text-muted fw-bold" th:text="${stat.count}"></span>
+                            </td>
+                            <td>
+                                <div class="fw-semibold" th:text="${attempt.student.fullName}"></div>
+                                <small class="text-muted" th:text="'@' + ${attempt.student.username}"></small>
+                            </td>
+                            <td th:text="${attempt.exam.title}"></td>
+                            <td>
+                                <strong th:text="${attempt.score}"></strong>
+                                <span class="text-muted" th:text="'/' + ${attempt.totalMarks}"></span>
+                            </td>
+                            <td>
+                                <div class="progress" style="width:80px; height:8px;">
+                                    <div class="progress-bar"
+                                         th:classappend="${attempt.passed} ? 'bg-success' : 'bg-danger'"
+                                         th:style="'width:' + ${attempt.score * 100 / attempt.totalMarks} + '%'"></div>
+                                </div>
+                                <small th:text="${#numbers.formatDecimal(attempt.score * 100.0 / attempt.totalMarks, 1, 1)} + '%'"></small>
+                            </td>
+                            <td>
+                                <span th:if="${attempt.passed}" class="badge bg-success">Passed</span>
+                                <span th:unless="${attempt.passed}" class="badge bg-danger">Failed</span>
+                            </td>
+                            <td>
+                                <span th:if="${attempt.tabSwitchCount > 0}" class="badge bg-warning text-dark">
+                                    <i class="bi bi-exclamation-triangle me-1"></i>
+                                    <span th:text="${attempt.tabSwitchCount}"></span>
+                                </span>
+                                <span th:if="${attempt.tabSwitchCount == 0}" class="text-muted">—</span>
+                            </td>
+                            <td class="pe-4 text-muted small" th:text="${#temporals.format(attempt.submittedAt, 'dd MMM yyyy')}"></td>
+                        </tr>
+                        <tr th:if="${#lists.isEmpty(attempts)}">
+                            <td colspan="8" class="text-center text-muted py-5">No completed attempts yet.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

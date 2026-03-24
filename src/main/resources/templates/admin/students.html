@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Students')}"></head>
+<body class="d-flex flex-column min-vh-100">
+<nav th:replace="~{fragments/layout :: navbar}"></nav>
+
+<div class="container my-4 flex-grow-1">
+    <div th:replace="~{fragments/layout :: alerts}"></div>
+    <h4 class="fw-bold mb-4"><i class="bi bi-people-fill me-2 text-primary"></i>Registered Students</h4>
+
+    <div class="card border-0 shadow-sm rounded-4">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="ps-4">#</th>
+                            <th>Name</th>
+                            <th>Username</th>
+                            <th>Email</th>
+                            <th>Registered</th>
+                            <th>Status</th>
+                            <th class="pe-4">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="student, stat : ${students}">
+                            <td class="ps-4" th:text="${stat.count}"></td>
+                            <td class="fw-semibold" th:text="${student.fullName}"></td>
+                            <td><span class="badge bg-light text-dark border" th:text="'@' + ${student.username}"></span></td>
+                            <td th:text="${student.email}"></td>
+                            <td class="text-muted small" th:text="${#temporals.format(student.createdAt, 'dd MMM yyyy')}"></td>
+                            <td>
+                                <span th:if="${student.enabled}" class="badge bg-success">Active</span>
+                                <span th:unless="${student.enabled}" class="badge bg-danger">Blocked</span>
+                            </td>
+                            <td class="pe-4">
+                                <form th:action="@{/admin/students/{id}/toggle(id=${student.id})}" method="post" class="d-inline">
+                                    <button th:class="${student.enabled} ? 'btn btn-sm btn-outline-danger' : 'btn btn-sm btn-outline-success'">
+                                        <i th:class="${student.enabled} ? 'bi bi-slash-circle' : 'bi bi-check-circle'"></i>
+                                        <span th:text="${student.enabled} ? 'Block' : 'Unblock'"></span>
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                        <tr th:if="${#lists.isEmpty(students)}">
+                            <td colspan="7" class="text-center text-muted py-4">No students registered yet.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

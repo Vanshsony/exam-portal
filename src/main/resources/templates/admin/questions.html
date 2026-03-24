@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Manage Questions')}"></head>
+<body class="d-flex flex-column min-vh-100">
+<nav th:replace="~{fragments/layout :: navbar}"></nav>
+
+<div class="container my-4 flex-grow-1">
+    <div th:replace="~{fragments/layout :: alerts}"></div>
+
+    <div class="d-flex align-items-center mb-4 gap-3">
+        <a th:href="@{/admin/exams}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left"></i></a>
+        <div>
+            <h4 class="fw-bold mb-0" th:text="${exam.title}">Exam Title</h4>
+            <small class="text-muted">
+                <i class="bi bi-clock me-1"></i><span th:text="${exam.durationMinutes}"></span> min &nbsp;|&nbsp;
+                <i class="bi bi-award me-1"></i>Total: <span th:text="${exam.totalMarks}"></span> marks &nbsp;|&nbsp;
+                Pass: <span th:text="${exam.passingMarks}"></span> marks
+            </small>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- Add Question Form -->
+        <div class="col-md-5">
+            <div class="card border-0 shadow-sm rounded-4 sticky-top" style="top:20px">
+                <div class="card-body p-4">
+                    <h6 class="fw-bold mb-3"><i class="bi bi-plus-circle me-2 text-primary"></i>Add Question</h6>
+                    <form th:action="@{/admin/exams/{id}/questions/add(id=${exam.id})}" method="post">
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Question *</label>
+                            <textarea name="questionText" class="form-control" rows="3" placeholder="Enter question text..." required></textarea>
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label fw-semibold">Options</label>
+                            <div class="input-group mb-2">
+                                <span class="input-group-text bg-primary text-white fw-bold">A</span>
+                                <input type="text" name="optionA" class="form-control" placeholder="Option A" required/>
+                            </div>
+                            <div class="input-group mb-2">
+                                <span class="input-group-text bg-success text-white fw-bold">B</span>
+                                <input type="text" name="optionB" class="form-control" placeholder="Option B" required/>
+                            </div>
+                            <div class="input-group mb-2">
+                                <span class="input-group-text bg-warning text-white fw-bold">C</span>
+                                <input type="text" name="optionC" class="form-control" placeholder="Option C" required/>
+                            </div>
+                            <div class="input-group mb-3">
+                                <span class="input-group-text bg-danger text-white fw-bold">D</span>
+                                <input type="text" name="optionD" class="form-control" placeholder="Option D" required/>
+                            </div>
+                        </div>
+                        <div class="row g-2 mb-3">
+                            <div class="col-7">
+                                <label class="form-label fw-semibold">Correct Answer *</label>
+                                <select name="correctAnswer" class="form-select" required>
+                                    <option value="A">A</option>
+                                    <option value="B">B</option>
+                                    <option value="C">C</option>
+                                    <option value="D">D</option>
+                                </select>
+                            </div>
+                            <div class="col-5">
+                                <label class="form-label fw-semibold">Marks</label>
+                                <input type="number" name="marks" class="form-control" value="1" min="1"/>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="bi bi-plus me-2"></i>Add Question
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Questions List -->
+        <div class="col-md-7">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h6 class="fw-bold mb-0"><i class="bi bi-list-ol me-2"></i>Questions (<span th:text="${#lists.size(questions)}">0</span>)</h6>
+            </div>
+
+            <div th:if="${#lists.isEmpty(questions)}" class="card border-dashed rounded-4 text-center py-5 text-muted border-0 bg-light">
+                <i class="bi bi-question-circle fs-1 mb-2"></i>
+                <p>No questions yet. Add your first question!</p>
+            </div>
+
+            <div th:each="q, stat : ${questions}" class="card border-0 shadow-sm rounded-3 mb-3">
+                <div class="card-body p-3">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div class="flex-grow-1">
+                            <p class="fw-semibold mb-2">
+                                <span class="badge bg-primary me-2" th:text="${stat.count}"></span>
+                                <span th:text="${q.questionText}"></span>
+                            </p>
+                            <div class="row g-1 small">
+                                <div class="col-6">
+                                    <span th:classappend="${q.correctAnswer == 'A'} ? 'text-success fw-bold' : 'text-muted'">
+                                        <i class="bi bi-circle me-1"></i>A. <span th:text="${q.optionA}"></span>
+                                    </span>
+                                </div>
+                                <div class="col-6">
+                                    <span th:classappend="${q.correctAnswer == 'B'} ? 'text-success fw-bold' : 'text-muted'">
+                                        <i class="bi bi-circle me-1"></i>B. <span th:text="${q.optionB}"></span>
+                                    </span>
+                                </div>
+                                <div class="col-6">
+                                    <span th:classappend="${q.correctAnswer == 'C'} ? 'text-success fw-bold' : 'text-muted'">
+                                        <i class="bi bi-circle me-1"></i>C. <span th:text="${q.optionC}"></span>
+                                    </span>
+                                </div>
+                                <div class="col-6">
+                                    <span th:classappend="${q.correctAnswer == 'D'} ? 'text-success fw-bold' : 'text-muted'">
+                                        <i class="bi bi-circle me-1"></i>D. <span th:text="${q.optionD}"></span>
+                                    </span>
+                                </div>
+                            </div>
+                            <small class="text-muted mt-1 d-block">
+                                Correct: <strong class="text-success" th:text="${q.correctAnswer}"></strong> &nbsp;|&nbsp; Marks: <strong th:text="${q.marks}"></strong>
+                            </small>
+                        </div>
+                        <form th:action="@{/admin/exams/questions/{qId}/delete(qId=${q.id})}" method="post" class="ms-2">
+                            <input type="hidden" name="examId" th:value="${exam.id}"/>
+                            <button class="btn btn-sm btn-outline-danger" onclick="return confirm('Delete this question?')">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

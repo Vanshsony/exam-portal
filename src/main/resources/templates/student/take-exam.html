@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Take Exam')}"></head>
+<style>
+    body { background: #f8f9fa; }
+    .exam-header { position: sticky; top: 0; z-index: 100; background: white; border-bottom: 2px solid #dee2e6; }
+    .question-card { transition: box-shadow 0.2s; }
+    .question-card:hover { box-shadow: 0 4px 15px rgba(0,0,0,0.1) !important; }
+    .option-label { cursor: pointer; border: 2px solid #dee2e6; border-radius: 10px; padding: 12px 16px; display: block; transition: all 0.2s; }
+    .option-label:hover { border-color: #0d6efd; background: #f0f5ff; }
+    input[type=radio]:checked + .option-label { border-color: #0d6efd; background: #e8f0ff; font-weight: 600; }
+    #timer.warning { color: #dc3545 !important; animation: pulse 1s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
+    .tab-warning { position: fixed; top: 0; left: 0; width: 100%; z-index: 9999; }
+</style>
+<body>
+
+<!-- Anti-cheat warning banner -->
+<div id="tabWarning" class="tab-warning alert alert-warning alert-dismissible d-none text-center fw-bold mb-0 rounded-0" role="alert">
+    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+    <span id="tabWarningText">⚠️ Tab switch detected! This has been recorded.</span>
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+</div>
+
+<!-- Sticky Header with Timer -->
+<div class="exam-header shadow-sm">
+    <div class="container py-3 d-flex justify-content-between align-items-center">
+        <div>
+            <h5 class="fw-bold mb-0" th:text="${exam.title}">Exam</h5>
+            <small class="text-muted"><span th:text="${#lists.size(questions)}"></span> questions</small>
+        </div>
+        <div class="text-center">
+            <div class="fs-3 fw-bold text-primary" id="timer">--:--</div>
+            <small class="text-muted">Time Remaining</small>
+        </div>
+        <button type="button" class="btn btn-success px-4" onclick="submitExam()">
+            <i class="bi bi-check-circle me-2"></i>Submit Exam
+        </button>
+    </div>
+</div>
+
+<!-- Exam Form -->
+<form id="examForm" th:action="@{/student/exam/submit}" method="post">
+    <input type="hidden" name="attemptId" th:value="${attemptId}"/>
+
+    <div class="container my-4 pb-5">
+        <div th:each="q, stat : ${questions}" class="card border-0 shadow-sm rounded-4 mb-4 question-card">
+            <div class="card-body p-4">
+                <p class="fw-semibold mb-3">
+                    <span class="badge bg-primary me-2" th:text="${stat.count}"></span>
+                    <span th:text="${q.questionText}"></span>
+                    <span class="badge bg-light text-muted border ms-2 float-end" th:text="${q.marks} + ' mark(s)'"></span>
+                </p>
+                <div class="row g-2">
+                    <div th:each="opt : ${ {'A','B','C','D'} }" class="col-md-6">
+                        <div>
+                            <input type="radio" class="d-none" th:id="${'q' + q.id + opt}" th:name="${q.id}" th:value="${opt}"/>
+                            <label th:for="${'q' + q.id + opt}" class="option-label w-100">
+                                <span class="badge me-2"
+                                      th:classappend="${opt == 'A'} ? 'bg-primary' : (${opt == 'B'} ? 'bg-success' : (${opt == 'C'} ? 'bg-warning' : 'bg-danger'))"
+                                      th:text="${opt}"></span>
+                                <span th:text="${opt == 'A'} ? ${q.optionA} : (${opt == 'B'} ? ${q.optionB} : (${opt == 'C'} ? ${q.optionC} : ${q.optionD}))"></span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="text-center mt-4">
+            <button type="button" class="btn btn-success btn-lg px-5" onclick="submitExam()">
+                <i class="bi bi-check-circle me-2"></i>Submit Exam
+            </button>
+        </div>
+    </div>
+</form>
+
+<script th:inline="javascript">
+    const durationSeconds = [[${durationSeconds}]];
+    const attemptId = [[${attemptId}]];
+    let timeLeft = durationSeconds;
+    let tabSwitchCount = 0;
+
+    // ---- TIMER ----
+    function updateTimer() {
+        const m = Math.floor(timeLeft / 60).toString().padStart(2, '0');
+        const s = (timeLeft % 60).toString().padStart(2, '0');
+        const timerEl = document.getElementById('timer');
+        timerEl.textContent = m + ':' + s;
+        if (timeLeft <= 60) timerEl.classList.add('warning');
+        if (timeLeft <= 0) { autoSubmit(); return; }
+        timeLeft--;
+    }
+    updateTimer();
+    const timerInterval = setInterval(updateTimer, 1000);
+
+    // ---- SUBMIT ----
+    function submitExam() {
+        clearInterval(timerInterval);
+        if (confirm('Are you sure you want to submit the exam?')) {
+            document.getElementById('examForm').submit();
+        } else {
+            // Restart timer
+            setInterval(updateTimer, 1000);
+        }
+    }
+
+    function autoSubmit() {
+        clearInterval(timerInterval);
+        alert('⏰ Time is up! Your exam is being submitted automatically.');
+        document.getElementById('examForm').submit();
+    }
+
+    // ---- ANTI-CHEAT: Tab Switch Detection ----
+    document.addEventListener('visibilitychange', function () {
+        if (document.hidden) {
+            tabSwitchCount++;
+            fetch('/student/exam/tab-switch', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: 'attemptId=' + attemptId
+            })
+            .then(r => r.text())
+            .then(response => {
+                const warningEl = document.getElementById('tabWarning');
+                const warningText = document.getElementById('tabWarningText');
+                warningEl.classList.remove('d-none');
+
+                if (response === 'FLAGGED') {
+                    warningText.textContent = '🚨 You have been flagged for suspicious activity! Exam is being submitted.';
+                    warningEl.classList.replace('alert-warning', 'alert-danger');
+                    setTimeout(() => document.getElementById('examForm').submit(), 3000);
+                } else {
+                    warningText.textContent = '⚠️ Tab switch #' + tabSwitchCount + ' detected and recorded! 3 switches will auto-submit.';
+                }
+            });
+        }
+    });
+
+    // Disable right-click
+    document.addEventListener('contextmenu', e => e.preventDefault());
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

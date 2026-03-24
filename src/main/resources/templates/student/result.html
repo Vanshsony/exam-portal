@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Result')}"></head>
+<body class="d-flex flex-column min-vh-100">
+<nav th:replace="~{fragments/layout :: navbar}"></nav>
+
+<div class="container my-4 flex-grow-1">
+
+    <!-- Result Header Card -->
+    <div class="card border-0 rounded-4 shadow mb-4 overflow-hidden">
+        <div th:class="${attempt.passed} ? 'card-header bg-success text-white p-4' : 'card-header bg-danger text-white p-4'">
+            <div class="row align-items-center">
+                <div class="col-auto">
+                    <div class="bg-white rounded-circle d-flex align-items-center justify-content-center" style="width:70px;height:70px;">
+                        <i th:class="${attempt.passed} ? 'bi bi-trophy-fill text-success fs-2' : 'bi bi-x-circle-fill text-danger fs-2'"></i>
+                    </div>
+                </div>
+                <div class="col">
+                    <h3 class="fw-bold mb-1" th:text="${attempt.passed} ? 'Congratulations! You Passed! 🎉' : 'Better Luck Next Time'"></h3>
+                    <p class="mb-0 opacity-75" th:text="${attempt.exam.title}"></p>
+                </div>
+                <div class="col-auto text-end">
+                    <div class="display-4 fw-bold" th:text="${attempt.score} + '/' + ${attempt.totalMarks}"></div>
+                    <div class="opacity-75" th:text="${#numbers.formatDecimal(attempt.score * 100.0 / attempt.totalMarks, 1, 1)} + '%'"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card-body p-4">
+            <div class="row g-4 text-center">
+                <div class="col-md-3">
+                    <div class="p-3 bg-light rounded-3">
+                        <div class="fs-4 fw-bold text-primary" th:text="${attempt.score}"></div>
+                        <div class="text-muted small">Score</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="p-3 bg-light rounded-3">
+                        <div class="fs-4 fw-bold text-secondary" th:text="${attempt.totalMarks}"></div>
+                        <div class="text-muted small">Total Marks</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="p-3 bg-light rounded-3">
+                        <div class="fs-4 fw-bold text-info" th:text="${attempt.exam.passingMarks}"></div>
+                        <div class="text-muted small">Passing Marks</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="p-3 bg-light rounded-3">
+                        <div class="fs-4 fw-bold" th:classappend="${attempt.tabSwitchCount > 0} ? 'text-warning' : 'text-success'"
+                             th:text="${attempt.tabSwitchCount}"></div>
+                        <div class="text-muted small">Tab Switches</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action buttons -->
+            <div class="d-flex gap-2 mt-4">
+                <a th:href="@{/student/result/{id}/pdf(id=${attempt.id})}" class="btn btn-danger">
+                    <i class="bi bi-file-earmark-pdf me-2"></i>Download PDF Result
+                </a>
+                <a th:href="@{/student/leaderboard}" class="btn btn-outline-warning">
+                    <i class="bi bi-trophy me-2"></i>View Leaderboard
+                </a>
+                <a th:href="@{/student/dashboard}" class="btn btn-outline-secondary">
+                    <i class="bi bi-house me-2"></i>Dashboard
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Detailed Answer Review -->
+    <h5 class="fw-bold mb-3"><i class="bi bi-list-check me-2 text-primary"></i>Answer Review</h5>
+
+    <div th:each="q, stat : ${questions}" class="card border-0 shadow-sm rounded-3 mb-3">
+        <div class="card-body p-4">
+            <p class="fw-semibold mb-3">
+                <span class="badge bg-primary me-2" th:text="${stat.count}"></span>
+                <span th:text="${q.questionText}"></span>
+            </p>
+
+            <div class="row g-2">
+                <div th:each="opt : ${ {'A','B','C','D'} }" class="col-md-6">
+                    <div th:with="studentAns=${answers[q.id.toString()]}, isCorrect=${q.correctAnswer == opt}, isSelected=${studentAns == opt}">
+                        <div class="p-2 px-3 rounded-3 border-2 border"
+                             th:classappend="${isCorrect} ? 'bg-success bg-opacity-10 border-success text-success fw-bold' :
+                                             (${isSelected and !isCorrect} ? 'bg-danger bg-opacity-10 border-danger text-danger' : 'bg-light border-light')">
+                            <i th:if="${isCorrect}" class="bi bi-check-circle-fill me-2 text-success"></i>
+                            <i th:if="${isSelected and !isCorrect}" class="bi bi-x-circle-fill me-2 text-danger"></i>
+                            <span th:text="${opt} + '. ' + (${opt == 'A'} ? ${q.optionA} : (${opt == 'B'} ? ${q.optionB} : (${opt == 'C'} ? ${q.optionC} : ${q.optionD})))"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-2 small">
+                <span class="text-success fw-semibold"><i class="bi bi-check2 me-1"></i>Correct Answer: <span th:text="${q.correctAnswer}"></span></span>
+                &nbsp;|&nbsp;
+                <span th:with="studentAns=${answers[q.id.toString()]}">
+                    <span th:if="${studentAns == q.correctAnswer}" class="text-success">✅ You got it right!</span>
+                    <span th:unless="${studentAns == q.correctAnswer}" class="text-danger">
+                        ❌ Your answer: <strong th:text="${studentAns != null} ? ${studentAns} : 'Not answered'"></strong>
+                    </span>
+                </span>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

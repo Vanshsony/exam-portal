@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Leaderboard')}"></head>
+<body class="d-flex flex-column min-vh-100">
+<nav th:replace="~{fragments/layout :: navbar}"></nav>
+
+<div class="container my-4 flex-grow-1">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h4 class="fw-bold"><i class="bi bi-trophy-fill me-2 text-warning"></i>Global Leaderboard</h4>
+    </div>
+
+    <!-- Top 3 Podium -->
+    <div th:if="${#lists.size(attempts) >= 3}" class="row justify-content-center g-3 mb-4">
+        <!-- 2nd Place -->
+        <div class="col-md-3 align-self-end">
+            <div class="card border-0 shadow rounded-4 text-center bg-light">
+                <div class="card-body py-3">
+                    <div class="fs-1">🥈</div>
+                    <div class="fw-bold" th:text="${attempts[1].student.fullName}"></div>
+                    <div class="text-muted small" th:text="${attempts[1].exam.title}"></div>
+                    <div class="fs-5 fw-bold text-secondary" th:text="${attempts[1].score} + '/' + ${attempts[1].totalMarks}"></div>
+                </div>
+            </div>
+        </div>
+        <!-- 1st Place -->
+        <div class="col-md-3">
+            <div class="card border-0 shadow rounded-4 text-center" style="background: linear-gradient(135deg, #ffd700, #ffa500); color:white;">
+                <div class="card-body py-4">
+                    <div class="fs-1">🥇</div>
+                    <div class="fw-bold fs-5" th:text="${attempts[0].student.fullName}"></div>
+                    <div class="small opacity-75" th:text="${attempts[0].exam.title}"></div>
+                    <div class="fs-4 fw-bold" th:text="${attempts[0].score} + '/' + ${attempts[0].totalMarks}"></div>
+                </div>
+            </div>
+        </div>
+        <!-- 3rd Place -->
+        <div class="col-md-3 align-self-end">
+            <div class="card border-0 shadow rounded-4 text-center" style="background:#cd7f32; color:white;">
+                <div class="card-body py-3">
+                    <div class="fs-1">🥉</div>
+                    <div class="fw-bold" th:text="${attempts[2].student.fullName}"></div>
+                    <div class="small opacity-75" th:text="${attempts[2].exam.title}"></div>
+                    <div class="fs-5 fw-bold" th:text="${attempts[2].score} + '/' + ${attempts[2].totalMarks}"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Full Table -->
+    <div class="card border-0 shadow-sm rounded-4">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-dark">
+                        <tr>
+                            <th class="ps-4">Rank</th>
+                            <th>Student</th>
+                            <th>Exam</th>
+                            <th>Score</th>
+                            <th>Percentage</th>
+                            <th class="pe-4">Result</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="attempt, stat : ${attempts}">
+                            <td class="ps-4">
+                                <span th:if="${stat.index == 0}">🥇</span>
+                                <span th:if="${stat.index == 1}">🥈</span>
+                                <span th:if="${stat.index == 2}">🥉</span>
+                                <span th:if="${stat.index > 2}" class="text-muted fw-bold" th:text="${stat.count}"></span>
+                            </td>
+                            <td>
+                                <div class="fw-semibold" th:text="${attempt.student.fullName}"></div>
+                                <small class="text-muted" th:text="'@' + ${attempt.student.username}"></small>
+                            </td>
+                            <td th:text="${attempt.exam.title}"></td>
+                            <td><strong th:text="${attempt.score}"></strong>/<span class="text-muted" th:text="${attempt.totalMarks}"></span></td>
+                            <td>
+                                <div class="progress" style="width:80px;height:8px;">
+                                    <div class="progress-bar"
+                                         th:classappend="${attempt.passed} ? 'bg-success' : 'bg-danger'"
+                                         th:style="'width:' + ${attempt.score * 100 / attempt.totalMarks} + '%'"></div>
+                                </div>
+                                <small th:text="${#numbers.formatDecimal(attempt.score * 100.0 / attempt.totalMarks, 1, 1)} + '%'"></small>
+                            </td>
+                            <td class="pe-4">
+                                <span th:if="${attempt.passed}" class="badge bg-success">Passed</span>
+                                <span th:unless="${attempt.passed}" class="badge bg-danger">Failed</span>
+                            </td>
+                        </tr>
+                        <tr th:if="${#lists.isEmpty(attempts)}">
+                            <td colspan="6" class="text-center text-muted py-5">No results yet. Be the first to complete an exam!</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
